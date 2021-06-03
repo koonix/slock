@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/Xinerama.h>
+#include <X11/extensions/dpms.h>
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -413,6 +414,7 @@ main(int argc, char **argv) {
 	int i, s, nlocks, nscreens;
 	int count_fonts;
 	char **font_names;
+	CARD16 standby, suspend, off;
 
 	ARGBEGIN {
 	case 'v':
@@ -486,6 +488,20 @@ main(int argc, char **argv) {
 	if (nlocks != nscreens)
 		return 1;
 
+	/* DPMS magic to disable the monitor */
+	if (!DPMSCapable(dpy))
+		die("slock: DPMSCapable failed\n");
+	if (!DPMSEnable(dpy))
+		die("slock: DPMSEnable failed\n");
+	if (!DPMSGetTimeouts(dpy, &standby, &suspend, &off))
+		die("slock: DPMSGetTimeouts failed\n");
+	if (!standby || !suspend || !off)
+		die("slock: at least one DPMS variable is zero\n");
+	if (!DPMSSetTimeouts(dpy, monitortime, monitortime, monitortime))
+		die("slock: DPMSSetTimeouts failed\n");
+
+	XSync(dpy, 0);
+
 	/* run post-lock command */
 	if (argc > 0) {
 		switch (fork()) {
@@ -502,6 +518,10 @@ main(int argc, char **argv) {
 
 	/* everything is now blank. Wait for the correct password */
 	readpw(dpy, &rr, locks, nscreens, hash);
+
+	/* reset DPMS values to inital ones */
+	DPMSSetTimeouts(dpy, standby, suspend, off);
+	XSync(dpy, 0);
 
 	return 0;
 }
