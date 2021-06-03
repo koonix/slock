@@ -495,8 +495,6 @@ main(int argc, char **argv) {
 		die("slock: DPMSEnable failed\n");
 	if (!DPMSGetTimeouts(dpy, &standby, &suspend, &off))
 		die("slock: DPMSGetTimeouts failed\n");
-	if (!standby || !suspend || !off)
-		die("slock: at least one DPMS variable is zero\n");
 	if (!DPMSSetTimeouts(dpy, monitortime, monitortime, monitortime))
 		die("slock: DPMSSetTimeouts failed\n");
 
