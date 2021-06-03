@@ -15,7 +15,7 @@ static const int failonclear = 1;
 static const int monitortime = 8;
 
 /* default message */
-static const char * message = "Enter Password Please";
+static const char * message = "Enter Password, Please!";
 
 /* text color */
 static const char * text_color = "#aaaaaa";
