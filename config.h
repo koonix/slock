@@ -2,8 +2,9 @@
 static const char *user  = "nobody";
 static const char *group = "nobody";
 
-#if defined __has_include && __has_include ("/tmp/wal-slock.h")
-#include "/tmp/wal-slock.h"
+/* include pywal colors if they exist */
+#if defined __has_include && __has_include ("pywal.h")
+#include "pywal.h"
 #endif
 #ifndef PYWAL
 
