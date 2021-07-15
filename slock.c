@@ -50,7 +50,9 @@ struct xrandr {
 	int errbase;
 };
 
+#include "xrdb.h"
 #include "config.h"
+#include "xrdb.c"
 
 static void
 die(const char *errstr, ...)
@@ -428,6 +430,9 @@ main(int argc, char **argv) {
 	int count_fonts;
 	char **font_names;
 	CARD16 standby, suspend, off;
+
+	/* load colors from xrdb */
+	xrdb_read();
 
 	ARGBEGIN {
 	case 'v':

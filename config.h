@@ -2,23 +2,25 @@
 static const char *user  = "nobody";
 static const char *group = "nobody";
 
-/* include pywal colors if they exist */
-#if defined __has_include && __has_include ("pywal.h")
-#include "pywal.h"
-#endif
-#ifndef PYWAL
+/* specify default colors */
+static char col_init[]   = "#000000";  /* after initialization */
+static char col_input[]  = "#003300";  /* during input */
+static char col_failed[] = "#330000";  /* wrong password */
+static char text_color[] = "#aaaaaa";  /* message text */
 
-/* colors */
+/* specify colors to read from xresources */
+XCOLORS
+    XLOAD( col_init,   "*.background" );
+    XLOAD( col_input,  "*.color2"     );
+    XLOAD( col_failed, "*.background" );
+    XLOAD( text_color, "*.foreground" );
+XCOLORS_END
+
 static const char *colorname[NUMCOLS] = {
-    [INIT] =   "black",     /* after initialization */
-    [INPUT] =  "#003300",   /* during input */
-    [FAILED] = "#330000",   /* wrong password */
+    [INIT]   = col_init,    /* after initialization */
+    [INPUT]  = col_input,   /* during input */
+    [FAILED] = col_failed,  /* wrong password */
 };
-
-/* text color */
-static const char * text_color = "#aaaaaa";
-
-#endif
 
 /* default message */
 static const char * message = "Enter Password, Please!";
