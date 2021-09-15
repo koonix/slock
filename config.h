@@ -11,7 +11,7 @@ static char text_color[] = "#aaaaaa";  /* message text */
 /* specify colors to read from xresources */
 XCOLORS
     XLOAD( col_init,   "*.background" );
-    XLOAD( col_input,  "*.color2"     );
+    XLOAD( col_input,  "*.color1"     );
     XLOAD( col_failed, "*.background" );
     XLOAD( text_color, "*.foreground" );
 XCOLORS_END
