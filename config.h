@@ -8,14 +8,6 @@ static char col_input[]  = "#003300";  /* during input */
 static char col_failed[] = "#330000";  /* wrong password */
 static char text_color[] = "#aaaaaa";  /* message text */
 
-/* specify colors to read from xresources */
-XCOLORS
-    XLOAD( col_init,   "*.background" );
-    XLOAD( col_input,  "*.color1"     );
-    XLOAD( col_failed, "*.background" );
-    XLOAD( text_color, "*.foreground" );
-XCOLORS_END
-
 static const char *colorname[NUMCOLS] = {
     [INIT]   = col_init,    /* after initialization */
     [INPUT]  = col_input,   /* during input */
