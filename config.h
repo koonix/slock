@@ -21,7 +21,7 @@ static const char * message = "Enter Password, Please!";
 static const int failonclear = 1;
 
 /* time in seconds before the monitor shuts down */
-static const int monitortime = 10;
+static const int monitortime = 30;
 
 /* text size (must be a valid size) */
 static const char * font_name = "-uw-ttyp0-medium-r-normal--22-200-75-75-c-110-iso8859-15";
