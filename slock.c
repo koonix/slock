@@ -23,10 +23,12 @@
 #include <X11/Xutil.h>
 #include <X11/Xft/Xft.h>
 #include <X11/XF86keysym.h>
+#include <X11/XKBlib.h>
 
 #include "arg.h"
 #include "util.h"
 
+static unsigned int xkblayoutorig = 0;
 char *argv0;
 
 /* global count to prevent repeated error messages */
@@ -579,8 +581,20 @@ main(int argc, char **argv) {
 		}
 	}
 
+	/* save the keyboard layout, then set it to the value of "xkblayout" in config.h */
+	if (xkblayout >= 0) {
+		XkbStateRec xkbstate;
+		XkbGetState(dpy, XkbUseCoreKbd, &xkbstate);
+		xkblayoutorig = (unsigned int)xkbstate.group;
+		XkbLockGroup(dpy, XkbUseCoreKbd, (unsigned int)xkblayout);
+	}
+
 	/* everything is now blank. Wait for the correct password */
 	readpw(dpy, &rr, locks, nscreens, hash);
+
+	/* restore the keyboard layout */
+	if (xkblayout >= 0)
+		XkbLockGroup(dpy, XkbUseCoreKbd, xkblayoutorig);
 
 	/* reset DPMS values to inital ones */
 	DPMSSetTimeouts(dpy, standby, suspend, off);

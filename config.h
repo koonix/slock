@@ -2,6 +2,10 @@
 static const char *user  = "nobody";
 static const char *group = "nobody";
 
+/* keyboard layout to switch to.
+ * set to a negative value to disable keyboard layout switching. */
+static int xkblayout = 0;
+
 static const char *colorname[NUMCOLS] = {
     [BACKGROUND] = "#131313", /* after initialization */
     [INIT]   = "#2f2f2f",    /* after initialization */
