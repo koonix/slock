@@ -7,7 +7,7 @@ static const char *group = "nobody";
 static int xkblayout = 0;
 
 static const char *colorname[NUMCOLS] = {
-    [BACKGROUND] = "#131313", /* after initialization */
+    [BACKGROUND] = "black", /* after initialization */
     [INIT]   = "#2f2f2f",    /* after initialization */
     [INPUT]  = "#005577",   /* during input */
     [FAILED] = "#993030",  /* wrong password */
@@ -17,7 +17,7 @@ static const char *colorname[NUMCOLS] = {
 static const int failonclear = 1;
 
 /* time in seconds before the monitor shuts down */
-static const int monitortime = 30;
+static const int monitortime = 60;
 
 /* message */
 static char text_color[] = "#aaaaaa";
@@ -25,10 +25,10 @@ static const char * message = "";
 /* set the message font to uw-ttyp0-font. install it from the AUR. */
 static const char * font_name = "-uw-ttyp0-medium-r-normal--22-200-75-75-c-110-iso8859-15";
 
-static const int logosize = 20;
+static const int logosize = 35;
 /* grid width and height for right center alignment */
 static const int logow = 12;
-static const int logoh = 16;
+static const int logoh = 10;
 static XRectangle rectangles[9] = {
     /* x	y	w	h */
     { 0,	3,	1,	3 },
