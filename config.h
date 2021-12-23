@@ -12,13 +12,8 @@ static const char *colorname[NUMCOLS] = {
     [FAILED] = "#993030",  /* wrong password */
 };
 
-/* message */
-static const char * message = "Enter Password, Please!";
-static const char * font_name = "-uw-ttyp0-medium-r-normal--22-200-75-75-c-110-iso8859-15";
-static char text_color[] = "#aaaaaa";
+/* treat a cleared input like a wrong password (color) */
+static const int failonclear = 0;
 
 /* time in seconds before the monitor shuts down */
 static const int monitortime = 60;
-
-/* treat a cleared input like a wrong password (color) */
-static const int failonclear = 1;
