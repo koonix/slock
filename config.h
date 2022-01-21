@@ -7,8 +7,8 @@ static const char *group = "nobody";
 static int xkblayout = 0;
 
 static const char *colorname[NUMCOLS] = {
-    [INIT]   = "gray", /* after initialization */
-    [INPUT]  = "#f5c211", /* during input */
+    [INIT]   = "#a2a2a2", /* after initialization */
+    [INPUT]  = "#b6900d", /* during input */
     [FAILED] = "#993030", /* wrong password */
 };
 
