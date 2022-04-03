@@ -25,13 +25,9 @@ static const int logosize = 75;
 static const int logow = 12;
 static const int logoh = 6;
 
-/* blur settings */
-#define BLUR /* enable blur */
-static const int blurRadius=5;
-
-/* pixelation settings */
-// #define PIXELATION /* enable pixelation */
-static const int pixelSize=0; /* pixelation radius */
+/* blur and pixelation of the background image; set to 0 to disable */
+static const int blur_radius = 5;
+static const int pixelation_size=0;
 
 /* change image gamma.
  * a gamma of 1.0 is normal, 2.0 brightens and 0.5 darkens etc. */

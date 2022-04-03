@@ -62,8 +62,6 @@ struct xrandr {
 	int errbase;
 };
 
-Imlib_Image image;
-
 static void
 die(const char *errstr, ...)
 {
@@ -147,11 +145,11 @@ resizerectangles(struct lock *lock)
 {
 	int i;
 
-	for (i = 0; i < LENGTH(rectangles); i++){
-		lock->rectangles[i].x = (rectangles[i].x * logosize)
-                                + lock->xoff + ((lock->mw) / 2) - (logow / 2 * logosize);
-		lock->rectangles[i].y = (rectangles[i].y * logosize)
-                                + lock->yoff + ((lock->mh) / 2) - (logoh / 2 * logosize);
+	for (i = 0; i < LENGTH(rectangles); i++) {
+		lock->rectangles[i].x = (rectangles[i].x * logosize) +
+			lock->xoff + ((lock->mw) / 2) - (logow / 2 * logosize);
+		lock->rectangles[i].y = (rectangles[i].y * logosize) +
+			lock->yoff + ((lock->mh) / 2) - (logoh / 2 * logosize);
 		lock->rectangles[i].width = rectangles[i].width * logosize;
 		lock->rectangles[i].height = rectangles[i].height * logosize;
 	}
@@ -160,9 +158,6 @@ resizerectangles(struct lock *lock)
 static void
 drawlogo(Display *dpy, struct lock *lock, int color)
 {
-	/*
-	XSetForeground(dpy, lock->gc, lock->colors[BACKGROUND]);
-	XFillRectangle(dpy, lock->drawable, lock->gc, 0, 0, lock->x, lock->y); */
 	lock->drawable = lock->bgmap;
 	XSetForeground(dpy, lock->gc, lock->colors[color]);
 	XFillRectangles(dpy, lock->drawable, lock->gc, lock->rectangles, LENGTH(rectangles));
@@ -203,18 +198,13 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 			    IsPrivateKeypadKey(ksym))
 				continue;
 			switch (ksym) {
-      case XF86XK_AudioPlay:
-      case XF86XK_AudioStop:
-      case XF86XK_AudioPrev:
-      case XF86XK_AudioNext:
-      case XF86XK_AudioRaiseVolume:
-      case XF86XK_AudioLowerVolume:
-      case XF86XK_AudioMute:
-      case XF86XK_AudioMicMute:
-      case XF86XK_MonBrightnessDown:
-      case XF86XK_MonBrightnessUp:
-        XSendEvent(dpy, DefaultRootWindow(dpy), True, KeyPressMask, &ev);
-        break;
+			case XF86XK_AudioPlay: case XF86XK_AudioStop:
+			case XF86XK_AudioPrev: case XF86XK_AudioNext:
+			case XF86XK_AudioRaiseVolume: case XF86XK_AudioLowerVolume:
+			case XF86XK_AudioMute: case XF86XK_AudioMicMute:
+			case XF86XK_MonBrightnessDown: case XF86XK_MonBrightnessUp:
+				XSendEvent(dpy, DefaultRootWindow(dpy), True, KeyPressMask, &ev);
+				break;
 			case XK_Return:
 				passwd[len] = '\0';
 				errno = 0;
@@ -274,6 +264,86 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 	}
 }
 
+static void
+applybackground(Display *dpy, struct lock *lock)
+{
+	Imlib_Image image = NULL;
+	Screen *screen;
+
+	/* create screenshot image */
+	screen = ScreenOfDisplay(dpy, lock->screen);
+	image = imlib_create_image(screen->width, screen->height);
+	imlib_context_set_image(image);
+	imlib_context_set_display(dpy);
+	imlib_context_set_visual(DefaultVisual(dpy, 0));
+	imlib_context_set_drawable(RootWindow(dpy, lock->screen));
+	imlib_copy_drawable_to_image(0, 0, 0, screen->width, screen->height, 0, 0, 1);
+
+	/* apply contrast, gamma and brightness */
+	Imlib_Color_Modifier icm = imlib_create_color_modifier();
+	imlib_context_set_color_modifier(icm);
+	imlib_modify_color_modifier_contrast(contrast);
+	imlib_modify_color_modifier_gamma(gamma);
+	imlib_modify_color_modifier_brightness(brightness);
+	imlib_apply_color_modifier();
+
+	if (blur_radius)
+		imlib_image_blur(blur_radius);
+
+	if (pixelation_size) {
+		int width  = screen->width;
+		int height = screen->height;
+		for (int y = 0; y < height; y += pixelation_size) {
+			for (int x = 0; x < width; x += pixelation_size) {
+				int red   = 0;
+				int green = 0;
+				int blue  = 0;
+				Imlib_Color pixel;
+				Imlib_Color* pp;
+				pp = &pixel;
+				for (int j = 0; j < pixelation_size && j < height; j++) {
+					for (int i = 0; i < pixelation_size && i < width; i++) {
+						imlib_image_query_pixel(x+i, y+j, pp);
+						red   += pixel.red;
+						green += pixel.green;
+						blue  += pixel.blue;
+					}
+				}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdiv-by-zero"
+				red   /= (pixelation_size * pixelation_size);
+				green /= (pixelation_size * pixelation_size);
+				blue  /= (pixelation_size * pixelation_size);
+#pragma GCC diagnostic pop
+				imlib_context_set_color(red, green, blue, pixel.alpha);
+				imlib_image_fill_rectangle(x, y, pixelation_size, pixelation_size);
+				red   = 0;
+				green = 0;
+				blue  = 0;
+			}
+		}
+	}
+
+	if (image) {
+		lock->bgmap = XCreatePixmap(dpy, lock->root,
+			DisplayWidth(dpy, lock->screen),
+			DisplayHeight(dpy, lock->screen),
+			DefaultDepth(dpy, lock->screen)
+		);
+		imlib_context_set_image(image);
+		imlib_context_set_display(dpy);
+		imlib_context_set_visual(DefaultVisual(dpy, lock->screen));
+		imlib_context_set_colormap(DefaultColormap(dpy, lock->screen));
+		imlib_context_set_drawable(lock->bgmap);
+		imlib_render_image_on_drawable(0, 0);
+		imlib_free_color_modifier();
+		imlib_free_image();
+	}
+
+	if (lock->bgmap)
+		XSetWindowBackgroundPixmap(dpy, lock->win, lock->bgmap);
+}
+
 static struct lock *
 lockscreen(Display *dpy, struct xrandr *rr, int screen)
 {
@@ -294,18 +364,6 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 	lock->screen = screen;
 	lock->root = RootWindow(dpy, lock->screen);
 
-    if(image)
-    {
-        lock->bgmap = XCreatePixmap(dpy, lock->root, DisplayWidth(dpy, lock->screen), DisplayHeight(dpy, lock->screen), DefaultDepth(dpy, lock->screen));
-        imlib_context_set_image(image);
-        imlib_context_set_display(dpy);
-        imlib_context_set_visual(DefaultVisual(dpy, lock->screen));
-        imlib_context_set_colormap(DefaultColormap(dpy, lock->screen));
-        imlib_context_set_drawable(lock->bgmap);
-        imlib_render_image_on_drawable(0, 0);
-        imlib_free_color_modifier();
-        imlib_free_image();
-    }
 	for (i = 0; i < NUMCOLS; i++) {
 		XAllocNamedColor(dpy, DefaultColormap(dpy, lock->screen),
 		                 colorname[i], &color, &dummy);
@@ -328,7 +386,7 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 		lock->mh = lock->y;
 	}
 	lock->drawable = XCreatePixmap(dpy, lock->root,
-            lock->x, lock->y, DefaultDepth(dpy, screen));
+		lock->x, lock->y, DefaultDepth(dpy, screen));
 	lock->gc = XCreateGC(dpy, lock->root, 0, NULL);
 	XSetLineAttributes(dpy, lock->gc, 1, LineSolid, CapButt, JoinMiter);
 
@@ -340,8 +398,6 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 	                          CopyFromParent,
 	                          DefaultVisual(dpy, lock->screen),
 	                          CWOverrideRedirect | CWBackPixel, &wa);
-	if(lock->bgmap)
-		XSetWindowBackgroundPixmap(dpy, lock->win, lock->bgmap);
 	lock->pmap = XCreateBitmapFromData(dpy, lock->win, curs, 8, 8);
 	invisible = XCreatePixmapCursor(dpy, lock->pmap, lock->pmap,
 	                                &color, &color, 0, 0);
@@ -364,11 +420,12 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 
 		/* input is grabbed: we can lock the screen */
 		if (ptgrab == GrabSuccess && kbgrab == GrabSuccess) {
-			XMapRaised(dpy, lock->win);
 			if (rr->active)
 				XRRSelectInput(dpy, lock->win, RRScreenChangeNotifyMask);
 
 			XSelectInput(dpy, lock->root, SubstructureNotifyMask);
+			applybackground(dpy, lock);
+			XMapRaised(dpy, lock->win);
 			drawlogo(dpy, lock, INIT);
 			return lock;
 		}
@@ -388,6 +445,8 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 	if (kbgrab != GrabSuccess)
 		fprintf(stderr, "slock: unable to grab keyboard for screen %d\n",
 		        screen);
+
+
 	return NULL;
 }
 
@@ -450,63 +509,6 @@ main(int argc, char **argv) {
 	if (setuid(duid) < 0)
 		die("slock: setuid: %s\n", strerror(errno));
 
-	/* create screenshot image */
-	Screen *scr = ScreenOfDisplay(dpy, DefaultScreen(dpy));
-	image = imlib_create_image(scr->width,scr->height);
-	imlib_context_set_image(image);
-	imlib_context_set_display(dpy);
-	imlib_context_set_visual(DefaultVisual(dpy,0));
-	imlib_context_set_drawable(RootWindow(dpy,XScreenNumberOfScreen(scr)));
-	imlib_copy_drawable_to_image(0,0,0,scr->width,scr->height,0,0,1);
-
-    /* apply contrast, gamma and brightness */
-	Imlib_Color_Modifier icm = imlib_create_color_modifier();
-	imlib_context_set_color_modifier(icm);
-	imlib_modify_color_modifier_contrast(contrast);
-	imlib_modify_color_modifier_gamma(gamma);
-	imlib_modify_color_modifier_brightness(brightness);
-	imlib_apply_color_modifier();
-
-#ifdef BLUR
-	imlib_image_blur(blurRadius);
-#endif
-
-#ifdef PIXELATION
-	int width = scr->width;
-	int height = scr->height;
-
-	for(int y = 0; y < height; y += pixelSize)
-	{
-		for(int x = 0; x < width; x += pixelSize)
-		{
-			int red = 0;
-			int green = 0;
-			int blue = 0;
-
-			Imlib_Color pixel;
-			Imlib_Color* pp;
-			pp = &pixel;
-			for(int j = 0; j < pixelSize && j < height; j++)
-			{
-				for(int i = 0; i < pixelSize && i < width; i++)
-				{
-					imlib_image_query_pixel(x+i,y+j,pp);
-					red += pixel.red;
-					green += pixel.green;
-					blue += pixel.blue;
-				}
-			}
-			red /= (pixelSize*pixelSize);
-			green /= (pixelSize*pixelSize);
-			blue /= (pixelSize*pixelSize);
-			imlib_context_set_color(red,green,blue,pixel.alpha);
-			imlib_image_fill_rectangle(x,y,pixelSize,pixelSize);
-			red = 0;
-			green = 0;
-			blue = 0;
-		}
-	}
-#endif
 
 	/* check for Xrandr support */
 	rr.active = XRRQueryExtension(dpy, &rr.evbase, &rr.errbase);
@@ -580,3 +582,5 @@ main(int argc, char **argv) {
 	XCloseDisplay(dpy);
 	return 0;
 }
+
+// vim:noexpandtab
