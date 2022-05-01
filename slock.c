@@ -309,12 +309,9 @@ applybackground(Display *dpy, struct lock *lock)
 						blue  += pixel.blue;
 					}
 				}
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdiv-by-zero"
-				red   /= (pixelation_size * pixelation_size);
-				green /= (pixelation_size * pixelation_size);
-				blue  /= (pixelation_size * pixelation_size);
-#pragma GCC diagnostic pop
+				red   /= (float)(pixelation_size * pixelation_size);
+				green /= (float)(pixelation_size * pixelation_size);
+				blue  /= (float)(pixelation_size * pixelation_size);
 				imlib_context_set_color(red, green, blue, pixel.alpha);
 				imlib_image_fill_rectangle(x, y, pixelation_size, pixelation_size);
 				red   = 0;
