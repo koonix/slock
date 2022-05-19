@@ -8,8 +8,9 @@ static int xkblayout = 0;
 
 static const char *colorname[NUMCOLS] = {
 	[INIT]   = "#a2a2a2", /* after initialization */
-	[INPUT]  = "#b6900d", /* during input */
 	[FAILED] = "#993030", /* wrong password */
+	[INPUT1]  = "#048000", /* during input */
+	[INPUT2]  = "#005980", /* during input */
 };
 
 /* treat a cleared input like a wrong password (color) */

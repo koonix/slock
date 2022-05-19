@@ -36,8 +36,9 @@ char *argv0;
 
 enum {
 	INIT,
-	INPUT,
 	FAILED,
+	INPUT1,
+	INPUT2,
 	NUMCOLS
 };
 
@@ -221,7 +222,7 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 				break;
 			case XK_Escape:
 				explicit_bzero(&passwd, sizeof(passwd));
-				len = 0;
+				len = failure = 0;
 				break;
 			case XK_BackSpace:
 				if (len)
@@ -235,7 +236,7 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 				}
 				break;
 			}
-			color = len ? INPUT : ((failure || failonclear) ? FAILED : INIT);
+			color = len ? (len % 2 ? INPUT1 : INPUT2) : ((failure || failonclear) ? FAILED : INIT);
 			if (running && oldc != color) {
 				for (screen = 0; screen < nscreens; screen++) {
 					drawlogo(dpy, locks[screen], color);
@@ -325,8 +326,7 @@ applybackground(Display *dpy, struct lock *lock)
 		lock->bgmap = XCreatePixmap(dpy, lock->root,
 			DisplayWidth(dpy, lock->screen),
 			DisplayHeight(dpy, lock->screen),
-			DefaultDepth(dpy, lock->screen)
-		);
+			DefaultDepth(dpy, lock->screen));
 		imlib_context_set_image(image);
 		imlib_context_set_display(dpy);
 		imlib_context_set_visual(DefaultVisual(dpy, lock->screen));
