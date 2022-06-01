@@ -36,8 +36,9 @@ char *argv0;
 
 enum {
 	INIT,
-	INPUT,
 	FAILED,
+	INPUT1,
+	INPUT2,
 	NUMCOLS
 };
 
@@ -221,7 +222,7 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 				break;
 			case XK_Escape:
 				explicit_bzero(&passwd, sizeof(passwd));
-				len = 0;
+				len = failure = 0;
 				break;
 			case XK_BackSpace:
 				if (len)
@@ -235,11 +236,10 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 				}
 				break;
 			}
-			color = len ? INPUT : ((failure || failonclear) ? FAILED : INIT);
+			color = len ? (len % 2 ? INPUT1 : INPUT2) : ((failure || failonclear) ? FAILED : INIT);
 			if (running && oldc != color) {
-				for (screen = 0; screen < nscreens; screen++) {
+				for (screen = 0; screen < nscreens; screen++)
 					drawlogo(dpy, locks[screen], color);
-				}
 				oldc = color;
 			}
 		} else if (rr->active && ev.type == rr->evbase + RRScreenChangeNotify) {
@@ -275,7 +275,8 @@ applybackground(Display *dpy, struct lock *lock)
 	image = imlib_create_image(screen->width, screen->height);
 	imlib_context_set_image(image);
 	imlib_context_set_display(dpy);
-	imlib_context_set_visual(DefaultVisual(dpy, 0));
+	imlib_context_set_colormap(DefaultColormap(dpy, lock->screen));
+	imlib_context_set_visual(DefaultVisual(dpy, lock->screen));
 	imlib_context_set_drawable(RootWindow(dpy, lock->screen));
 	imlib_copy_drawable_to_image(0, 0, 0, screen->width, screen->height, 0, 0, 1);
 
@@ -286,54 +287,18 @@ applybackground(Display *dpy, struct lock *lock)
 	imlib_modify_color_modifier_gamma(gamma);
 	imlib_modify_color_modifier_brightness(brightness);
 	imlib_apply_color_modifier();
+	imlib_free_color_modifier();
 
-	if (blur_radius)
-		imlib_image_blur(blur_radius);
-
-	if (pixelation_size) {
-		int width  = screen->width;
-		int height = screen->height;
-		for (int y = 0; y < height; y += pixelation_size) {
-			for (int x = 0; x < width; x += pixelation_size) {
-				int red   = 0;
-				int green = 0;
-				int blue  = 0;
-				Imlib_Color pixel;
-				Imlib_Color* pp;
-				pp = &pixel;
-				for (int j = 0; j < pixelation_size && j < height; j++) {
-					for (int i = 0; i < pixelation_size && i < width; i++) {
-						imlib_image_query_pixel(x+i, y+j, pp);
-						red   += pixel.red;
-						green += pixel.green;
-						blue  += pixel.blue;
-					}
-				}
-				red   /= (float)(pixelation_size * pixelation_size);
-				green /= (float)(pixelation_size * pixelation_size);
-				blue  /= (float)(pixelation_size * pixelation_size);
-				imlib_context_set_color(red, green, blue, pixel.alpha);
-				imlib_image_fill_rectangle(x, y, pixelation_size, pixelation_size);
-				red   = 0;
-				green = 0;
-				blue  = 0;
-			}
-		}
-	}
+	if (blurradius)
+		imlib_image_blur(blurradius);
 
 	if (image) {
 		lock->bgmap = XCreatePixmap(dpy, lock->root,
 			DisplayWidth(dpy, lock->screen),
 			DisplayHeight(dpy, lock->screen),
-			DefaultDepth(dpy, lock->screen)
-		);
-		imlib_context_set_image(image);
-		imlib_context_set_display(dpy);
-		imlib_context_set_visual(DefaultVisual(dpy, lock->screen));
-		imlib_context_set_colormap(DefaultColormap(dpy, lock->screen));
+			DefaultDepth(dpy, lock->screen));
 		imlib_context_set_drawable(lock->bgmap);
 		imlib_render_image_on_drawable(0, 0);
-		imlib_free_color_modifier();
 		imlib_free_image();
 	}
 
@@ -419,11 +384,10 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 		if (ptgrab == GrabSuccess && kbgrab == GrabSuccess) {
 			if (rr->active)
 				XRRSelectInput(dpy, lock->win, RRScreenChangeNotifyMask);
-
 			XSelectInput(dpy, lock->root, SubstructureNotifyMask);
 			applybackground(dpy, lock);
-			XMapRaised(dpy, lock->win);
 			drawlogo(dpy, lock, INIT);
+			XMapRaised(dpy, lock->win);
 			return lock;
 		}
 

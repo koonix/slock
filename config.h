@@ -7,9 +7,10 @@ static const char *group = "nobody";
 static int xkblayout = 0;
 
 static const char *colorname[NUMCOLS] = {
-	[INIT]   = "#a2a2a2", /* after initialization */
-	[INPUT]  = "#b6900d", /* during input */
+	[INIT]   = "#a6a6a6", /* after initialization */
 	[FAILED] = "#993030", /* wrong password */
+	[INPUT1]  = "#048000", /* during input */
+	[INPUT2]  = "#00628c", /* during input */
 };
 
 /* treat a cleared input like a wrong password (color) */
@@ -25,9 +26,8 @@ static const int logosize = 40;
 static const int logow = 12;
 static const int logoh = 10;
 
-/* blur and pixelation of the background image; set to 0 to disable */
-static const int blur_radius = 10;
-static const int pixelation_size = 0;
+/* blur radius of the background image; set to 0 to disable */
+static const int blurradius = 10;
 
 /* change image gamma.
  * a gamma of 1.0 is normal, 2.0 brightens and 0.5 darkens etc. */
@@ -35,11 +35,11 @@ static const double gamma = 0.6;
 
 /* change image contrast.
  * a contrast of 1.0 does nothing, 2.0 will double contrast etc. */
-static const double contrast = 0.6;
+static const double contrast = 0.4;
 
 /* change image brightness. a brightness value of 0 does nothing,
  * -1.0 is complete darkness, and 1.0 makes everything white. */
-static const double brightness = -0.01;
+static const double brightness = -0.05;
 
 /* dwm logo rectangles */
 static XRectangle rectangles[9] = {
