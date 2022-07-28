@@ -1,58 +1,61 @@
+#ifdef SLOCK_CONFIG
+
+/* ======================
+ * = slock's configs
+ * ====================== */
+
 /* user and group to drop privileges to */
 static const char *user  = "nobody";
 static const char *group = "nobody";
 
-/* keyboard layout to switch to.
- * set to a negative value to disable keyboard layout switching. */
-static int xkblayout = 0;
-
 static const char *colorname[NUMCOLS] = {
-	[INIT]   = "#a6a6a6", /* after initialization */
-	[FAILED] = "#993030", /* wrong password */
-	[INPUT1]  = "#048000", /* during input */
-	[INPUT2]  = "#00628c", /* during input */
+	[NORMAL]     = "#001b26", /* background rectangle */
+	[BORDER]     = "#004966", /* border */
+	[SQUARE]     = "#0076a6", /* inner indicator square */
+	[SQUARECAPS] = "#cc3333", /* indicator square when capslock is active */
+	[FAIL]       = "#330d0d", /* wrong passowrd background rectangle */
+	[FAILBORDER] = "#cc3333", /* wrong password border */
+	[OUTLINE]    = "#000000", /* outline around border */
+};
+
+/* input indicator dimensions */
+static const int indparams[NUMPARAMS] = {
+	[WIDTH]       = 300,
+	[HEIGHT]      = 35,
+	[BORDERPX]    = 5,
+	[OUTLINEPX]   = 2,
+	[SQUAREGAPPX] = 2,
 };
 
 /* treat a cleared input like a wrong password (color) */
 static const int failonclear = 0;
 
-/* time in seconds before the monitor shuts down */
+/* turn off the monitor after this many seconds of inactivity */
 static const int monitortime = 60;
 
-/* insert grid pattern with scale 1:1, the size can be changed with logosize */
-static const int logosize = 40;
+/* switch to this keyboard layout number after locking
+ * and restore the keyboard layout after unlocking.
+ * 0 indicates the first (main) keyboard layout.
+ * set to a negative value to disable this behaviour. */
+static const unsigned int keyboardlt = 0;
 
-/* grid width and height for right center alignment */
-static const int logow = 12;
-static const int logoh = 10;
+#endif
+#ifdef SLOCKIMG_CONFIG
 
-/* blur radius of the background image; set to 0 to disable */
-static const int blurradius = 10;
+/* ======================
+ * = slockimg's configs
+ * ====================== */
 
-/* change image gamma.
- * a gamma of 1.0 is normal, 2.0 brightens and 0.5 darkens etc. */
-static const double gamma = 0.6;
+/* size and position of the overlay image */
+static const char overlay_size[] = "500x500";
+static const char overlay_gravity[] = "northwest";
+static const char overlay_coord[] = "+0+0";
 
-/* change image contrast.
- * a contrast of 1.0 does nothing, 2.0 will double contrast etc. */
-static const double contrast = 0.4;
+/* dimensions to use if they can't be fetched from X */
+static const int  fallback_width  = 1920;
+static const int  fallback_height = 1080;
 
-/* change image brightness. a brightness value of 0 does nothing,
- * -1.0 is complete darkness, and 1.0 makes everything white. */
-static const double brightness = -0.05;
+/* path to imagemagick's convert utility */
+static const char convert_path[] = "/usr/bin/convert";
 
-/* dwm logo rectangles */
-static XRectangle rectangles[9] = {
-	/* x    y       w       h */
-	{ 0,    3,      1,      3 },
-	{ 1,    3,      2,      1 },
-	{ 0,    5,      8,      1 },
-	{ 3,    0,      1,      5 },
-	{ 5,    3,      1,      2 },
-	{ 7,    3,      1,      2 },
-	{ 8,    3,      4,      1 },
-	{ 9,    4,      1,      2 },
-	{ 11,   4,      1,      2 },
-};
-
-// vim:noexpandtab
+#endif

@@ -6,7 +6,7 @@ include config.mk
 SRC = slock.c ${COMPATSRC}
 OBJ = ${SRC:.c=.o}
 
-all: options slock
+all: options slock slockimg
 
 options:
 	@echo slock build options:
@@ -28,9 +28,13 @@ slock: ${OBJ}
 	@echo CC -o $@
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
+slockimg: slockimg.c
+	@echo CC -o $@
+	@${CC} -o $@ $< ${CFLAGS} ${LDFLAGS}
+
 clean:
 	@echo cleaning
-	@rm -f slock ${OBJ} slock-${VERSION}.tar.gz
+	@rm -f slock slockimg ${OBJ} slock-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
@@ -47,10 +51,15 @@ install: all
 	@cp -f slock ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/slock
 	@chmod u+s ${DESTDIR}${PREFIX}/bin/slock
+	@cp -f slockimg ${DESTDIR}${PREFIX}/bin
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/slockimg
+	@chmod u+s ${DESTDIR}${PREFIX}/bin/slockimg
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed "s/VERSION/${VERSION}/g" <slock.1 >${DESTDIR}${MANPREFIX}/man1/slock.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/slock.1
+	@mkdir -p ${DESTDIR}${IMGPREFIX}
+	@cp -f overlay.png ${DESTDIR}${OVERLAYIMGPATH}
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin

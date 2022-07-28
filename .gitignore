@@ -1,3 +1,5 @@
 slock
-pywal.h
+slockimg
 *.o
+*.orig
+*.rej
