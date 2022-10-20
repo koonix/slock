@@ -150,7 +150,7 @@ gethash(void)
 }
 
 static void
-setbgimage(Display *dpy, struct lock *lock)
+drawbgimage(Display *dpy, struct lock *lock)
 {
 	GC gc;
 	Pixmap img, tiledimg, mask;
@@ -212,8 +212,7 @@ drawindicator(Display *dpy, struct lock *lock, int failed, int capslock)
 }
 
 static void
-readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
-       const char *hash)
+readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens, const char *hash)
 {
 	XRRScreenChangeNotifyEvent *rre;
 	char buf[32], passwd[256], *inputhash;
@@ -305,10 +304,10 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 					if (rre->rotation == RR_Rotate_90 ||
 					    rre->rotation == RR_Rotate_270)
 						XResizeWindow(dpy, locks[screen]->win,
-						              rre->height, rre->width);
+							rre->height, rre->width);
 					else
 						XResizeWindow(dpy, locks[screen]->win,
-						              rre->width, rre->height);
+							rre->width, rre->height);
 					XClearWindow(dpy, locks[screen]->win);
 					break;
 				}
@@ -338,36 +337,35 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 
 	for (i = 0; i < NUMCOLS; i++) {
 		XAllocNamedColor(dpy, DefaultColormap(dpy, lock->screen),
-		                 colorname[i], &color, &dummy);
+			colorname[i], &color, &dummy);
 		lock->colors[i] = color.pixel;
 	}
 
 	/* init */
 	wa.override_redirect = 1;
 	lock->win = XCreateWindow(dpy, lock->root, 0, 0,
-	                          DisplayWidth(dpy, lock->screen),
-	                          DisplayHeight(dpy, lock->screen),
-	                          0, DefaultDepth(dpy, lock->screen),
-	                          CopyFromParent,
-	                          DefaultVisual(dpy, lock->screen),
-	                          CWOverrideRedirect, &wa);
-	setbgimage(dpy, lock);
+		DisplayWidth(dpy, lock->screen),
+		DisplayHeight(dpy, lock->screen),
+		0, DefaultDepth(dpy, lock->screen),
+		CopyFromParent,
+		DefaultVisual(dpy, lock->screen),
+		CWOverrideRedirect, &wa);
+	drawbgimage(dpy, lock);
 	lock->pmap = XCreateBitmapFromData(dpy, lock->win, curs, 8, 8);
-	invisible = XCreatePixmapCursor(dpy, lock->pmap, lock->pmap,
-	                                &color, &color, 0, 0);
+	invisible =
+		XCreatePixmapCursor(dpy, lock->pmap, lock->pmap, &color, &color, 0, 0);
 	XDefineCursor(dpy, lock->win, invisible);
 
 	/* Try to grab mouse pointer *and* keyboard for 600ms, else fail the lock */
 	for (i = 0, ptgrab = kbgrab = -1; i < 6; i++) {
 		if (ptgrab != GrabSuccess) {
 			ptgrab = XGrabPointer(dpy, lock->root, False,
-			                      ButtonPressMask | ButtonReleaseMask |
-			                      PointerMotionMask, GrabModeAsync,
-			                      GrabModeAsync, None, invisible, CurrentTime);
+				ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+				GrabModeAsync, GrabModeAsync, None, invisible, CurrentTime);
 		}
 		if (kbgrab != GrabSuccess) {
-			kbgrab = XGrabKeyboard(dpy, lock->root, True,
-			                       GrabModeAsync, GrabModeAsync, CurrentTime);
+			kbgrab = XGrabKeyboard(dpy, lock->root, True, GrabModeAsync,
+				GrabModeAsync, CurrentTime);
 		}
 
 		/* input is grabbed: we can lock the screen */
@@ -390,11 +388,9 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
 
 	/* we couldn't grab all input: fail out */
 	if (ptgrab != GrabSuccess)
-		fprintf(stderr, "slock: unable to grab mouse pointer for screen %d\n",
-		        screen);
+		fprintf(stderr, "slock: unable to grab mouse pointer for screen %d\n", screen);
 	if (kbgrab != GrabSuccess)
-		fprintf(stderr, "slock: unable to grab keyboard for screen %d\n",
-		        screen);
+		fprintf(stderr, "slock: unable to grab keyboard for screen %d\n", screen);
 	return NULL;
 }
 
