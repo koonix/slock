@@ -171,6 +171,9 @@ drawbgimage(Display *dpy, struct lock *lock)
 	XFillRectangle(dpy, tiledimg, gc, 0, 0, sw, sh);
 
 	XSetWindowBackgroundPixmap(dpy, lock->win, tiledimg);
+
+	XFreePixmap(dpy, tiledimg);
+	XFreeGC(dpy, gc);
 }
 
 static void
@@ -309,6 +312,7 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens, const
 						XResizeWindow(dpy, locks[screen]->win,
 							rre->width, rre->height);
 					XClearWindow(dpy, locks[screen]->win);
+					drawbgimage(dpy, locks[screen]);
 					break;
 				}
 			}
