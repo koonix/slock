@@ -1,5 +1,6 @@
 slock
 slockimg
+sunlock
 *.o
 *.orig
 *.rej

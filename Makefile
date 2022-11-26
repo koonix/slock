@@ -6,7 +6,7 @@ include config.mk
 SRC = slock.c ${COMPATSRC}
 OBJ = ${SRC:.c=.o}
 
-all: options slock slockimg
+all: options slock sunlock slockimg
 
 options:
 	@echo slock build options:
@@ -32,6 +32,10 @@ slockimg: slockimg.c
 	@echo CC -o $@
 	@${CC} -o $@ $< ${CFLAGS} ${LDFLAGS}
 
+sunlock: sunlock.c
+	@echo CC -o $@
+	@${CC} -o $@ $< ${CFLAGS} ${LDFLAGS}
+
 clean:
 	@echo cleaning
 	@rm -f slock slockimg ${OBJ} slock-${VERSION}.tar.gz
@@ -54,6 +58,9 @@ install: all
 	@cp -f slockimg ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/slockimg
 	@chmod u+s ${DESTDIR}${PREFIX}/bin/slockimg
+	@cp -f sunlock ${DESTDIR}${PREFIX}/bin
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/sunlock
+	@chmod u+s ${DESTDIR}${PREFIX}/bin/sunlock
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed "s/VERSION/${VERSION}/g" <slock.1 >${DESTDIR}${MANPREFIX}/man1/slock.1

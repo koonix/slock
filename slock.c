@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/dpms.h>
@@ -27,6 +28,9 @@
 #include "util.h"
 
 char *argv0;
+volatile unsigned char origkeyboardlt = 0;
+volatile CARD16 origdpms[3];
+Display *dpy;
 
 enum {
 	NORMAL,
@@ -404,8 +408,25 @@ usage(void)
 	die("usage: slock [-v] [cmd [arg ...]]\n");
 }
 
+static void
+restore(void)
+{
+	if (keyboardlt >= 0)
+		XkbLockGroup(dpy, XkbUseCoreKbd, origkeyboardlt);
+	DPMSSetTimeouts(dpy, origdpms[0], origdpms[1], origdpms[2]);
+	XFlush(dpy);
+}
+
+static void
+restoresig(int unused)
+{
+	restore();
+	exit(0);
+}
+
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
 	struct xrandr rr;
 	struct lock **locks;
 	struct passwd *pwd;
@@ -413,7 +434,6 @@ main(int argc, char **argv) {
 	uid_t duid;
 	gid_t dgid;
 	const char *hash;
-	Display *dpy;
 	int s, nlocks, nscreens;
 	unsigned char origkeyboardlt;
 	CARD16 origdpms[3];
@@ -488,6 +508,13 @@ main(int argc, char **argv) {
 		die("slock: DPMSSetTimeouts failed\n");
 	XSync(dpy, 0);
 
+	if (signal(SIGINT, restoresig) == SIG_ERR)
+		die("slock: can't install SIGINT handler\n");
+	if (signal(SIGTERM, restoresig) == SIG_ERR)
+		die("slock: can't install SIGTERM handler\n");
+	if (signal(SIGHUP, restoresig) == SIG_ERR)
+		die("slock: can't install SIGHUP handler\n");
+
 	/* run post-lock command */
 	if (argc > 0) {
 		switch (fork()) {
@@ -513,11 +540,8 @@ main(int argc, char **argv) {
 	/* everything is now blank. Wait for the correct password */
 	readpw(dpy, &rr, locks, nscreens, hash);
 
-	/* restore the original keyboard layout and DPMS values */
-	if (keyboardlt >= 0)
-		XkbLockGroup(dpy, XkbUseCoreKbd, origkeyboardlt);
-	DPMSSetTimeouts(dpy, origdpms[0], origdpms[1], origdpms[2]);
-	XSync(dpy, 0);
+	/* restore keyboard layout and DPMS */
+	restore();
 
 	return 0;
 }
